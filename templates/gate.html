@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Password Gate</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;background:#0b1020;color:#e7ecff;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .card{background:#101735;border:1px solid #1b2452;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{font-size:1.25rem;margin:0 0 12px}
+    p{opacity:.8;margin:0 0 16px}
+    input[type=password], input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #2a356d;background:#0d1430;color:#e7ecff}
+    button{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#5661ff;color:white;font-weight:600;cursor:pointer}
+    button:hover{filter:brightness(1.05)}
+    .msg{margin-bottom:12px;color:#ffb3b3}
+    .foot{margin-top:12px;font-size:.875rem;opacity:.7}
+  </style>
+</head>
+<body>
+  <form class="card" method="post" action="{{ url_for('gate') }}">
+    <h1>🔐 Enter password to continue</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="msg">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+    <input name="password" type="password" placeholder="Password" required autofocus>
+<!--      <input name="csrf" value="{{ csrf }}">-->
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div style="height:12px"></div>
+    <button type="submit">Unlock</button>
+<!--    <div class="foot">Tip: set environment variable <code>AUTH_PASSWORD</code> to change the password.</div>-->
+  </form>
+</body>
+</html>

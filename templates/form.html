@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Authorization Form</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;background:#0b1020;color:#e7ecff;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .wrap{max-width:720px;width:100%;padding:24px}
+    .card{background:#101735;border:1px solid #1b2452;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{font-size:1.35rem;margin:0 0 8px}
+    label{display:block;margin:12px 0 6px}
+    input, textarea, select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #2a356d;background:#0d1430;color:#e7ecff}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .actions{display:flex;gap:12px;margin-top:16px}
+    .btn{padding:12px 14px;border-radius:12px;border:0;background:#5661ff;color:white;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#24306c}
+    .msg{margin-bottom:12px;color:#a7ffb3}
+    .err{color:#ffb3b3;margin:6px 0 0;font-size:.9rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>📄 Authorization Form</h1>
+      <p>Please fill in the information below. Fields marked * are required.</p>
+      {% if success %}
+        <div class="msg">Form received at {{ submitted_at }}.</div>
+        <pre style="white-space:pre-wrap;background:#0d1430;border-radius:12px;padding:12px">{{ payload }}</pre>
+        <div class="actions">
+          <a class="btn secondary" href="{{ url_for('logout') }}">Logout</a>
+          <a class="btn" href="{{ url_for('authorize_form') }}">Submit another</a>
+        </div>
+      {% else %}
+        {% if errors %}
+          <div class="err">Please check: {{ errors|join(', ') }}</div>
+        {% endif %}
+        <form method="post" action="{{ url_for('authorize_form') }}">
+          <div class="row">
+            <div>
+              <label>Full Name *</label>
+              <input name="full_name" value="{{ form.full_name or '' }}" required>
+            </div>
+            <div>
+              <label>Email *</label>
+              <input name="email" type="email" value="{{ form.email or '' }}" required>
+            </div>
+          </div>
+
+          <label>Organization</label>
+          <input name="org" value="{{ form.org or '' }}">
+
+          <div class="row">
+            <div>
+              <label>Authorization Scope *</label>
+              <select name="scope" required>
+                <option value="" {% if not form.scope %}selected{% endif %}>-- select --</option>
+                <option {% if form.scope=='Read' %}selected{% endif %}>Read</option>
+                <option {% if form.scope=='Write' %}selected{% endif %}>Write</option>
+                <option {% if form.scope=='Read & Write' %}selected{% endif %}>Read & Write</option>
+              </select>
+            </div>
+            <div>
+              <label>Expiration (yyyy-mm-dd)</label>
+              <input name="expires" type="date" value="{{ form.expires or '' }}">
+            </div>
+          </div>
+
+          <label>Purpose of Use *</label>
+          <textarea name="purpose" rows="4" required>{{ form.purpose or '' }}</textarea>
+
+          <label><input type="checkbox" name="agree" value="1" {% if form.agree %}checked{% endif %}> I confirm the information is correct *</label>
+
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="actions">
+            <a class="btn secondary" href="{{ url_for('logout') }}">Logout</a>
+            <button class="btn" type="submit">Submit</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
