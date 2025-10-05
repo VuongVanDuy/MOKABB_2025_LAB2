@@ -1,5 +1,5 @@
 import os, re, secrets
-from datetime import datetime
+from datetime import datetime, UTC
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from dotenv import load_dotenv
 
@@ -50,7 +50,7 @@ def gate():
 
     if request.form.get("password") == AUTH_PASSWORD:
         session["authorized"] = True
-        return redirect(url_for("authorize_form"))
+        return redirect(url_for("info"))
     else:
         flash("Wrong password.")
         return render_template("gate.html", csrf=new_csrf()), 401
@@ -63,7 +63,8 @@ def logout():
 @app.route("/authorize", methods=["GET", "POST"])
 def authorize_form():
     if not require_auth():
-        return redirect(url_for("gate"))
+        # return error if not authorized
+        return "Unauthorized", 401
 
     if request.method == "GET":
         return render_template("form.html", form={}, errors=None, success=False, csrf=new_csrf())
@@ -82,15 +83,45 @@ def authorize_form():
     }
     errors = validate_form(form)
     if errors:
+        # return errors if validation fails
         return render_template("form.html", form=form, errors=errors, success=False, csrf=new_csrf()), 400
 
     payload = form.copy()
     return render_template(
         "form.html",
         success=True,
-        submitted_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        submitted_at=datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
         payload=payload,
         form={}, errors=None, csrf=new_csrf()
+    )
+
+@app.route("/info")
+def info():
+    # Yêu cầu đăng nhập
+    if not require_auth():
+        return redirect(url_for("gate"))  # hoặc abort(401)
+
+    # Giả lập dữ liệu thông tin (bạn có thể thay bằng dữ liệu thực)
+    info_data = {
+        "full_name": "Alice Example",
+        "email": "alice@example.com",
+        "org": "Acme Corp",
+        "scope": "Read & Write",
+        "expires": "2026-12-31",
+        "purpose": "Research and data analysis",
+        "agree": True,
+    }
+
+    # Nếu bạn lưu dữ liệu form trong session, có thể đọc lại:
+    # info_data = session.get("last_payload", {})
+
+    submitted_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    return render_template(
+        "info.html",      # file HTML đã viết ở trên
+        info=info_data,
+        submitted_at=submitted_at,
+        raw_payload=info_data,  # có thể bỏ nếu không cần
     )
 
 if __name__ == "__main__":

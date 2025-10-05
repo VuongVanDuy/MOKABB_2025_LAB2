@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Authorization Details</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;background:#0b1020;color:#e7ecff;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .wrap{max-width:720px;width:100%;padding:24px}
+    .card{background:#101735;border:1px solid #1b2452;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{font-size:1.35rem;margin:0 0 8px}
+    p{opacity:.8;margin:0 0 16px}
+    .grid{display:grid;grid-template-columns:1fr 2fr;gap:10px 16px}
+    .label{opacity:.75}
+    .value{background:#0d1430;border:1px solid #2a356d;border-radius:12px;padding:10px 12px;word-break:break-word}
+    .row-span{grid-column:1 / -1}
+    .actions{display:flex;gap:12px;margin-top:16px}
+    .btn{padding:12px 14px;border-radius:12px;border:0;background:#5661ff;color:white;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+    .btn.secondary{background:#24306c}
+    .msg{margin-bottom:12px;color:#a7ffb3}
+    .err{color:#ffb3b3;margin:6px 0 0;font-size:.9rem}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #2a356d;background:#0d1430}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>📄 Authorization Details</h1>
+      <p>This is a read-only view of the submitted information.</p>
+
+      {% if errors %}
+        <div class="err">Unable to load data: {{ errors|join(', ') }}</div>
+      {% endif %}
+
+      {% if info %}
+        <div class="grid">
+          <div class="label">Full Name</div>
+          <div class="value">{{ info.full_name or '—' }}</div>
+
+          <div class="label">Email</div>
+          <div class="value">{{ info.email or '—' }}</div>
+
+          <div class="label">Organization</div>
+          <div class="value">{{ info.org or '—' }}</div>
+
+          <div class="label">Authorization Scope</div>
+          <div class="value">
+            {% if info.scope %}
+              <span class="pill">{{ info.scope }}</span>
+            {% else %}—{% endif %}
+          </div>
+
+          <div class="label">Expiration</div>
+          <div class="value">
+            {{ info.expires or '—' }}
+          </div>
+
+          <div class="label">Purpose of Use</div>
+          <div class="value">{{ info.purpose or '—' }}</div>
+
+          <div class="label">Confirmed</div>
+          <div class="value">{{ 'Yes' if info.agree else 'No' }}</div>
+
+          <div class="label">Submitted At</div>
+          <div class="value">{{ submitted_at or '—' }}</div>
+
+          {% if raw_payload %}
+            <div class="row-span label">Raw Payload</div>
+            <pre class="row-span value" style="white-space:pre-wrap">{{ raw_payload }}</pre>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          <a class="btn secondary" href="{{ url_for('logout') }}">Logout</a>
+          <a class="btn" href="{{ url_for('authorize_form') }}">Back to Form</a>
+        </div>
+      {% else %}
+        <div class="err">No data to display.</div>
+        <div class="actions">
+          <a class="btn" href="{{ url_for('authorize_form') }}">Go to Form</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
