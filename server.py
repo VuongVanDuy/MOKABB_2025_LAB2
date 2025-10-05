@@ -37,7 +37,7 @@ def validate_form(data):
 
 @app.route("/")
 def home():
-    return redirect(url_for("authorize_form") if require_auth() else url_for("gate"))
+    return redirect(url_for("info") if require_auth() else url_for("gate"))
 
 @app.route("/gate", methods=["GET", "POST"])
 def gate():
