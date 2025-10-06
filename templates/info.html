@@ -69,17 +69,8 @@
             <pre class="row-span value" style="white-space:pre-wrap">{{ raw_payload }}</pre>
           {% endif %}
         </div>
-
-        <div class="actions">
-          <a class="btn secondary" href="{{ url_for('logout') }}">Logout</a>
-          <a class="btn" href="{{ url_for('authorize_form') }}">Back to Form</a>
-        </div>
-      {% else %}
-        <div class="err">No data to display.</div>
-        <div class="actions">
-          <a class="btn" href="{{ url_for('authorize_form') }}">Go to Form</a>
-        </div>
       {% endif %}
+        <input type="hidden" name="csrf" value="{{ csrf }}">
     </div>
   </div>
 </body>

@@ -37,7 +37,7 @@ def validate_form(data):
 
 @app.route("/")
 def home():
-    return redirect(url_for("info") if require_auth() else url_for("gate"))
+    return redirect(url_for("authorize_detail") if require_auth() else url_for("gate"))
 
 @app.route("/gate", methods=["GET", "POST"])
 def gate():
@@ -50,7 +50,7 @@ def gate():
 
     if request.form.get("password") == AUTH_PASSWORD:
         session["authorized"] = True
-        return redirect(url_for("info"))
+        return redirect(url_for("authorize_detail"))
     else:
         flash("Wrong password.")
         return render_template("gate.html", csrf=new_csrf()), 401
@@ -60,48 +60,13 @@ def logout():
     session.clear()
     return redirect(url_for("gate"))
 
-@app.route("/authorize", methods=["GET", "POST"])
-def authorize_form():
-    if not require_auth():
-        # return error if not authorized
-        return "Unauthorized", 401
 
-    if request.method == "GET":
-        return render_template("form.html", form={}, errors=None, success=False, csrf=new_csrf())
-
-    if not check_csrf(request.form.get("csrf")):
-        return "Invalid CSRF token", 400
-
-    form = {
-        "full_name": request.form.get("full_name", "").strip(),
-        "email": request.form.get("email", "").strip(),
-        "org": request.form.get("org", "").strip(),
-        "scope": request.form.get("scope", "").strip(),
-        "expires": request.form.get("expires", "").strip(),
-        "purpose": request.form.get("purpose", "").strip(),
-        "agree": request.form.get("agree") == "1",
-    }
-    errors = validate_form(form)
-    if errors:
-        # return errors if validation fails
-        return render_template("form.html", form=form, errors=errors, success=False, csrf=new_csrf()), 400
-
-    payload = form.copy()
-    return render_template(
-        "form.html",
-        success=True,
-        submitted_at=datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        payload=payload,
-        form={}, errors=None, csrf=new_csrf()
-    )
-
-@app.route("/info")
-def info():
+@app.route("/authorize")
+def authorize_detail():
     # Yêu cầu đăng nhập
     if not require_auth():
         return redirect(url_for("gate"))  # hoặc abort(401)
 
-    # Giả lập dữ liệu thông tin (bạn có thể thay bằng dữ liệu thực)
     info_data = {
         "full_name": "Alice Example",
         "email": "alice@example.com",
@@ -112,9 +77,6 @@ def info():
         "agree": True,
     }
 
-    # Nếu bạn lưu dữ liệu form trong session, có thể đọc lại:
-    # info_data = session.get("last_payload", {})
-
     submitted_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     return render_template(
@@ -122,7 +84,8 @@ def info():
         info=info_data,
         submitted_at=submitted_at,
         raw_payload=info_data,  # có thể bỏ nếu không cần
+        csrf=new_csrf()
     )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)

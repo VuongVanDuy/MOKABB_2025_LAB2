@@ -1,4 +1,5 @@
 """
+@author: Duy Vuong & Skochilov Ignat
 wifi_connect.py
 
 Windows-only: scan Wi-Fi networks and connect to a given SSID using netsh.
@@ -109,13 +110,6 @@ def guess_wifi_interface_name() -> str | None:
             return n
     return None
 
-# def ensure_wifi_enabled() -> str:
-#     iface = guess_wifi_interface_name()
-#     if not iface:
-#         raise RuntimeError("Could not find a Wi-Fi interface. Check drivers/Device Manager.")
-#     run(f'netsh interface set interface name="{iface}" admin=ENABLED')
-#     return iface
-
 def verify_connected(ssid: str, iface: str | None = None) -> bool:
     # Đọc trạng thái interface để chắc chắn đang "Connected" vào đúng SSID
     cmd = "netsh wlan show interfaces"
@@ -185,12 +179,10 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
         cp = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}"')
         time.sleep(1)
         if cp.returncode == 0 and verify_connected(ssid, iface):
-            # if not save_on_success:
-            #     run(f'netsh wlan delete profile name="{ssid}"')
-            print("Connected using existing profile.")
+            # print("Connected using existing profile.")
             return True
         else:
-            print('Failed to connect using existing profile (wrong password?)')
+            # print('Failed to connect using existing profile (wrong password?)')
             return False
 
     # 2) If profile not found and password provided, create profile XML (WPA2-Personal)
@@ -201,7 +193,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
     try:
         cp_add = run(f'netsh wlan add profile filename="{xml_path}" user=all')
         if cp_add.returncode != 0:
-            print(f'Failed to add temporary profile: {cp_add.stderr.strip() or cp_add.stdout.strip()}')
+            # print(f'Failed to add temporary profile: {cp_add.stderr.strip() or cp_add.stdout.strip()}')
             return False
 
         cp_conn = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}" interface="{iface}"')
@@ -217,7 +209,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
         else:
             # Kết nối không thành công ⇒ xóa profile tạm để không lưu mật khẩu
             run(f'netsh wlan delete profile name="{ssid}"')
-            print('Failed to connect using existing profile (wrong password?)')
+            # print('Failed to connect using existing profile (wrong password?)')
             return False
     finally:
         # Xóa file XML tạm (không ảnh hưởng profile đã add)
@@ -225,6 +217,33 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
             os.remove(xml_path)
         except Exception:
             pass
+
+
+def get_default_gateway() -> str|None:
+    """
+    Получает полную информацию о конкретном интерфейсе
+    """
+    try:
+        interface = guess_wifi_interface_name()
+        result = run(f"netsh interface ip show config name={interface}")
+
+        if result.returncode != 0:
+            print(f"Ошибка: Интерфейс '{interface}' не найден")
+            return None
+
+        lines = result.stdout.split('\n')
+        for line in lines:
+            if 'основной шлюз' in line.lower() or 'default gateway' in line.lower():
+                # Ищем IP-адрес в строке
+                ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
+                if ip_match:
+                    return ip_match.group(1)
+
+        return None
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return None
 
 
 def main():
