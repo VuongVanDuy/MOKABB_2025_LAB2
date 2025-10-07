@@ -25,7 +25,7 @@ def run(cmd: str, timeout: int = 20) -> subprocess.CompletedProcess:
     # Use shell=False via shlex.split for safety
     return subprocess.run(shlex.split(cmd), capture_output=True, text=True, errors="replace", timeout=timeout)
 
-def parse_netsh_networks(output: str) -> List[Dict[str, str]]:
+def parse_netsh_networks(output: str, patern: str) -> List[Dict[str, str]]:
     """
     Parse output of `netsh wlan show networks mode=Bssid` (English format expected).
     Returns list of dicts: {"ssid":..., "signal":..., "authentication":...}
@@ -44,9 +44,15 @@ def parse_netsh_networks(output: str) -> List[Dict[str, str]]:
         if m:
             ssid = m.group(1).strip()
             # Start a new network entry
-            current = {"ssid": escape(ssid), "signal": "", "authentication": ""}
-            networks.append(current)
-            continue
+            if patern is None:
+                current = {"ssid": escape(ssid), "signal": "", "authentication": ""}
+                networks.append(current)
+            elif patern and ssid.startswith(patern):
+                current = {"ssid": escape(ssid), "signal": "", "authentication": ""}
+                networks.append(current)
+            else:
+                current = None
+                continue
 
         # Signal line, e.g. "Signal : 88%"
         m = re.match(r"^Signal\s*:\s*(.+)$", line, flags=re.IGNORECASE)
@@ -76,7 +82,7 @@ def parse_netsh_networks(output: str) -> List[Dict[str, str]]:
 
     return networks
 
-def scan_networks_windows() -> List[Dict[str, str]]:
+def scan_networks_windows(patern: str=None) -> List[Dict[str, str]]:
     """Run netsh and parse available networks."""
     try:
         cp = run('netsh wlan show networks mode=Bssid')
@@ -86,7 +92,7 @@ def scan_networks_windows() -> List[Dict[str, str]]:
         raise RuntimeError(f"netsh returned error: {cp.stderr.strip() or cp.stdout.strip()}")
 
     out = cp.stdout
-    networks = parse_netsh_networks(out)
+    networks = parse_netsh_networks(out, patern)
     return networks
 
 def list_interfaces() -> list[dict]:
@@ -177,7 +183,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
     if profile_exists(ssid):
         print(iface)
         cp = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}"')
-        time.sleep(1)
+        time.sleep(0.1)
         if cp.returncode == 0 and verify_connected(ssid, iface):
             # print("Connected using existing profile.")
             return True
@@ -197,7 +203,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
             return False
 
         cp_conn = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}" interface="{iface}"')
-        time.sleep(1)  # wait a bit for connection to establish
+        time.sleep(0.1)  # wait a bit for connection to establish
         out2 = (cp_conn.stdout or "") + (cp_conn.stderr or "")
 
         # XÁC MINH THỰC SỰ ĐÃ KẾT NỐI
@@ -249,6 +255,7 @@ def get_default_gateway() -> str|None:
 def main():
     parser = argparse.ArgumentParser(prog="wifi_windows.py")
     parser.add_argument("--scan", action="store_true", help="Scan available Wi-Fi networks")
+    parser.add_argument("--patern", default=None, help="Pattern to match Wi-Fi networks")
     parser.add_argument("--connect", action="store_true", help="Connect to a network")
     parser.add_argument("--ssid", type=str, help="SSID to connect")
     parser.add_argument("--password", type=str, help="Password for the SSID (WPA2)")
@@ -256,7 +263,7 @@ def main():
 
     if args.scan:
         try:
-            nets = scan_networks_windows()
+            nets = scan_networks_windows(args.patern)
             if not nets:
                 print("No networks found (parsed). You may need to run command prompt as Administrator or use English locale for accurate parsing.")
             for i, n in enumerate(nets, 1):
@@ -277,5 +284,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     # verify_connected("Redmi Note 11", "Wi-Fi")
+    res = scan_networks_windows("Redmi")
+    print(res)
