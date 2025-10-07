@@ -183,7 +183,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
     if profile_exists(ssid):
         print(iface)
         cp = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}"')
-        time.sleep(0.1)
+        time.sleep(0.5)
         if cp.returncode == 0 and verify_connected(ssid, iface):
             # print("Connected using existing profile.")
             return True
@@ -203,7 +203,7 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
             return False
 
         cp_conn = run(f'netsh wlan connect name="{ssid}" ssid="{ssid}" interface="{iface}"')
-        time.sleep(0.1)  # wait a bit for connection to establish
+        time.sleep(0.5)  # wait a bit for connection to establish
         out2 = (cp_conn.stdout or "") + (cp_conn.stderr or "")
 
         # XÁC MINH THỰC SỰ ĐÃ KẾT NỐI

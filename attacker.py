@@ -35,6 +35,7 @@ def main():
                     print(datas)
                 except Exception as e:
                     print("The connection is interrupted, is connecting...")
+                    session, csrf_token = None, None
     except KeyboardInterrupt:
         print("Exiting...")
 

