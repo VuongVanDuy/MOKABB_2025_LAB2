@@ -22,7 +22,7 @@ def main():
                 continue
             session, csrf_token = None, None
             while verify_connected(ssid):
-                print("Start attack...")
+                print("Watting attack...")
                 api_url = f"http://{ip}:8080/gate"
                 if not session and not csrf_token:
                     # 2. Brute force password site
