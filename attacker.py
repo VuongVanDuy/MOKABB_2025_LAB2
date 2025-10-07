@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import requests
 from brute_force import brute_force_pass_site, brute_force_pass_wifi
 from wifi_connect import verify_connected
 
@@ -33,7 +34,7 @@ def main():
                     response = session.get(f"http://{ip}:8080/authorize", headers={"csrf-token": csrf_token})
                     datas = get_secret_info(response)
                     print(datas)
-                except Exception as e:
+                except requests.RequestException as e:
                     print("The connection is interrupted, is connecting...")
                     session, csrf_token = None, None
     except KeyboardInterrupt:
