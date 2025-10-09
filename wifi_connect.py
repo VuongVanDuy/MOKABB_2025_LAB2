@@ -93,7 +93,10 @@ def scan_networks_windows(patern: str=None) -> List[Dict[str, str]]:
 
     out = cp.stdout
     networks = parse_netsh_networks(out, patern)
-    return networks
+    for network in networks:
+        if network['signal'] == '100%':
+            return [network]
+   # return networks
 
 def list_interfaces() -> list[dict]:
     cp = run("netsh interface show interface")
@@ -284,7 +287,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     # verify_connected("Redmi Note 11", "Wi-Fi")
-    res = scan_networks_windows("Redmi")
-    print(res)
+    # res = scan_networks_windows("Redmi")
+    # print(res)

