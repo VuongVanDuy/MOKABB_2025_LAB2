@@ -109,7 +109,6 @@ def guess_wifi_interface_name() -> str | None:
     return None
 
 def verify_connected(ssid: str, iface: str | None = None) -> bool:
-    # Đọc trạng thái interface để chắc chắn đang "Connected" vào đúng SSID
     cmd = "netsh wlan show interfaces"
     if iface:
         cmd += f' interface="{iface}"'
@@ -215,61 +214,3 @@ def connect_network_windows(ssid: str, password: Optional[str] = None, save_on_s
             os.remove(xml_path)
         except Exception:
             pass
-
-
-def get_default_gateway() -> str|None:
-    """
-    Получает полную информацию о конкретном интерфейсе
-    """
-    try:
-        interface = guess_wifi_interface_name()
-        result = run(f"netsh interface ip show config name={interface}")
-
-        if result.returncode != 0:
-            print(f"Ошибка: Интерфейс '{interface}' не найден")
-            return None
-
-        lines = result.stdout.split('\n')
-        for line in lines:
-            if 'основной шлюз' in line.lower() or 'default gateway' in line.lower():
-                # Ищем IP-адрес в строке
-                ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
-                if ip_match:
-                    return ip_match.group(1)
-
-        return None
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        return None
-
-
-def main():
-    parser = argparse.ArgumentParser(prog="wifi_windows.py")
-    parser.add_argument("--scan", action="store_true", help="Scan available Wi-Fi networks")
-    parser.add_argument("--patern", default=None, help="Pattern to match Wi-Fi networks")
-    parser.add_argument("--connect", action="store_true", help="Connect to a network")
-    parser.add_argument("--ssid", type=str, help="SSID to connect")
-    parser.add_argument("--password", type=str, help="Password for the SSID (WPA2)")
-    args = parser.parse_args()
-
-    if args.scan:
-        try:
-            nets = scan_networks_windows(args.patern)
-            if not nets:
-                print("No networks found (parsed). You may need to run command prompt as Administrator or use English locale for accurate parsing.")
-            for i, n in enumerate(nets, 1):
-                print(f"{i}. SSID: {n['ssid']!s} | Signal: {n.get('signal','')} | Authentication: {n.get('authentication','')}")
-        except Exception as e:
-            print("Scan failed:", e)
-
-    elif args.connect:
-        if not args.ssid:
-            parser.error("--connect requires --ssid")
-        try:
-            ok = connect_network_windows(args.ssid, password=args.password)
-            print("Connected successfully." if ok else "Failed to connect.")
-        except Exception as e:
-            print("Connect failed:", e)
-    else:
-        parser.print_help()
