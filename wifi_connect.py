@@ -1,14 +1,3 @@
-"""
-@author: Duy Vuong & Skochilov Ignat
-wifi_connect.py
-
-Windows-only: scan Wi-Fi networks and connect to a given SSID using netsh.
-
-Usage examples:
-  python wifi_windows.py --scan
-  python wifi_windows.py --connect --ssid MyNetwork --password MyPass
-"""
-
 import subprocess
 import shlex
 import re
@@ -284,10 +273,3 @@ def main():
             print("Connect failed:", e)
     else:
         parser.print_help()
-
-
-if __name__ == "__main__":
-    main()
-    # verify_connected("Redmi Note 11", "Wi-Fi")
-    # res = scan_networks_windows("Redmi")
-    # print(res)

