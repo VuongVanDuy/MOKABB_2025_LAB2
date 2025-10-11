@@ -3,6 +3,10 @@ import requests
 from brute_force import brute_force_pass_site, brute_force_pass_wifi
 from wifi_connect import verify_connected
 
+# Параметры программы
+site_ip = "gw"
+wifi_pattern = "ESP-"
+
 def get_secret_info(response) -> list[str]:
     soup = BeautifulSoup(response.text, 'html.parser')
 
